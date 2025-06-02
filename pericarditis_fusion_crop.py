@@ -1,0 +1,200 @@
+import streamlit as st
+import pandas as pd
+import joblib
+from PIL import Image
+import torch
+import cv2
+import numpy as np
+import json
+from easydict import EasyDict as edict
+from model.classifier_vit import VIT
+import sys
+import os
+import io
+import shap
+import matplotlib.pyplot as plt
+from streamlit_cropper import st_cropper
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+st.title("Pericarditis Risk Calculator")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.subheader("Gender")
+    gender = st.radio("Gender", ["Male", "Female", "Unknown"], index=2)
+    male = 1 if gender == "Male" else 0
+    female = 1 if gender == "Female" else 0
+
+    st.subheader("Age")
+    age = st.number_input("Enter Age", min_value=0, max_value=120, step=1, value=None, format="%i")
+
+    # Default all age groups to 0
+    age_lt_40, age_40_80, age_gt_80 = 0, 0, 0
+    if age:
+        if age < 40:
+            age_lt_40 = 1
+        elif age <= 80:
+            age_40_80 = 1
+        else:
+            age_gt_80 = 1
+
+    st.subheader("Behavioral")
+    smoking = st.radio("Smoking", ["Yes", "Never", "Unknown"], index=2)
+
+with col2:
+    st.subheader("Comorbidities")
+    hypertension = st.radio("Hypertension", ["Yes", "No", "Unknown"], index=2)
+    hyperlipidemia = st.radio("Hyperlipidemia", ["Yes", "No", "Unknown"], index=2)
+    diabetes = st.radio("Diabetes", ["Yes", "No", "Unknown"], index=2)
+    cad = st.radio("Coronary Artery Disease (CAD)", ["Yes", "No", "Unknown"], index=2)
+    hf = st.radio("Heart Failure (HF)", ["Yes", "No", "Unknown"], index=2)
+with col3:
+    st.subheader(" ")
+    af = st.radio("Atrial Fibrillation (AF)", ["Yes", "No", "Unknown"], index=2)
+    mi = st.radio("Myocardial Infarction (MI)", ["Yes", "No", "Unknown"], index=2)
+    stroke = st.radio("Stroke", ["Yes", "No", "Unknown"], index=2)
+    cancer = st.radio("Cancer", ["Yes", "No", "Unknown"], index=2)
+    autoimmune = st.radio("Autoimmune Disease", ["Yes", "No", "Unknown"], index=2)
+
+def map_value(x):
+    return {"Yes": 1, "No": 0, "Never": 0, "Unknown": -1}[x]
+
+def pad_to_square(image, target_size):
+    h, w, c = image.shape
+    target_h, target_w = target_size
+    pad_top = (target_h - h) // 2
+    pad_bottom = target_h - h - pad_top
+    pad_left = (target_w - w) // 2
+    pad_right = target_w - w - pad_left
+    image_padded = np.pad(image, ((pad_top, pad_bottom), (pad_left, pad_right), (0, 0)),
+                          mode='constant', constant_values=255)
+
+    return image_padded
+
+input_dict = {
+    'Hypertension': map_value(hypertension),
+    'Hyperlipidemia': map_value(hyperlipidemia),
+    'Diabetes': map_value(diabetes),
+    'CAD': map_value(cad),
+    'HF': map_value(hf),
+    'AF': map_value(af),
+    'MI': map_value(mi),
+    'Smoking': map_value(smoking),
+    'Stroke': map_value(stroke),
+    'Cancer': map_value(cancer),
+    'Autoimmune': map_value(autoimmune),
+    'Male': male,
+    'Female': female,
+    'Age < 40': age_lt_40,
+    'Age 40-80': age_40_80,
+    'Age > 80': age_gt_80
+}
+
+
+with open('/media/Datacenter_storage/jialu/003/Rimita_project/ECG_encoder/logdir_ecg_final/' + 'cfg.json') as f:
+    cfg = edict(json.load(f))
+    ECG_model = VIT(cfg)
+    ckpt_path = os.path.join('/media/Datacenter_storage/jialu/003/Rimita_project/ECG_encoder/logdir_ecg_final/', 'best2.ckpt')
+    ckpt = torch.load(ckpt_path, weights_only=False)  # or weights_only=False if needed
+    ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
+
+
+col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference
+
+with col1:
+    uploaded_file = st.file_uploader("Upload ECG Image", type=["png", "jpg", "jpeg"])
+
+with col2:
+    st.markdown("##### Reference Format")
+    st.image("example_ecg_reference.png", caption="Expected Format", use_container_width=True)
+
+# After file is uploaded, show cropper
+if uploaded_file is not None:
+    st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
+
+    pil_image = Image.open(uploaded_file).convert("RGB")
+
+    # Display cropping widget
+    cropped_image = st_cropper(
+        pil_image,
+        realtime_update=True,
+        box_color="#FF4B4B",
+        aspect_ratio=None,
+        return_type="image"
+    )
+
+    st.image(cropped_image, caption="Cropped ECG", use_container_width=True)
+    # Convert cropped image to array
+    image = np.array(cropped_image)
+    h, w, _ = image.shape
+
+    # Continue preprocessing as before
+    intermediate_size = (w, w)
+    final_size = (512, 512)
+    padded_image = pad_to_square(image, intermediate_size)
+    final_image = cv2.resize(padded_image, final_size, interpolation=cv2.INTER_AREA)
+
+    # Normalize and convert to tensor
+    max_v = final_image.max()
+    min_v = final_image.min()
+    norm_image = (final_image - min_v) / (max_v - min_v)
+    norm_image = norm_image.transpose(2, 0, 1)
+    image_tensor = torch.tensor(norm_image, dtype=torch.float32).unsqueeze(0)
+
+    st.success("✅ Cropped image ready for prediction.")
+
+    input_df = pd.DataFrame([input_dict])
+
+    if st.button("Predict Pericarditis Risk"):
+        tabular_model = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/random_forest_pericarditis_model.pkl")
+        tabular_model_calibration = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/calibrated_random_forest_model.pkl")
+        # explainer = shap.TreeExplainer(tabular_model)
+        explainer = shap.TreeExplainer(tabular_model)
+
+    
+        # Tabular model
+        tabular_prob = tabular_model.predict_proba(input_df)[0][1]
+        shap_values = explainer.shap_values(input_df)
+
+        plt.figure()
+        shap.force_plot(
+            explainer.expected_value[0],
+            shap_values[:,:,0][0],
+            input_df.iloc[0],
+            matplotlib=True,
+            show=False
+        )
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight')
+        plt.close()
+        buf.seek(0)
+
+        st.image(buf, caption="SHAP Force Plot for Tabular Model", use_container_width=True)
+
+
+        # ECG model
+        with torch.no_grad():
+            ecg_output, _ = ECG_model(image_tensor)
+            ecg_prob = torch.sigmoid(ecg_output.view(-1)).cpu().numpy()[0]
+
+        calibrator_ecg = joblib.load("ecg_logit_calibrator.pkl")
+        calibrated_ecg_probs = calibrator_ecg.predict_proba(ecg_output.reshape(-1, 1))[:, 1]
+
+        # Fusion model
+        # fusion_model = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/LogisticRegression_model.pkl")
+        fusion_model = joblib.load("calibrated_fusion_model.pkl")
+        tabular_prob_calibration = tabular_model_calibration.predict_proba(input_df)[0][1]
+        fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
+        fusion_prob = fusion_model.predict_proba(fusion_input)[0][1]
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
+        with col2:
+            st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
+        with col3:
+            st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
+
