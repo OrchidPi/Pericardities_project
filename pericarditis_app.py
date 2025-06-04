@@ -93,7 +93,7 @@ input_dict = {
 }
 
 url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
-output_ckpt = "best2.ckpt"
+output_ckpt = "ECG_model.ckpt"
 gdown.download(url, output_ckpt, quiet=False)
 
 with open('./cfg.json') as f:
