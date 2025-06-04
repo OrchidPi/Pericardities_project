@@ -92,12 +92,14 @@ input_dict = {
     'Age > 80': age_gt_80
 }
 
+url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
+output_ckpt = "best2.ckpt"
+gdown.download(url, output_ckpt, quiet=False)
 
-with open('/media/Datacenter_storage/jialu/003/Rimita_project/ECG_encoder/logdir_ecg_final/' + 'cfg.json') as f:
+with open('./cfg.json') as f:
     cfg = edict(json.load(f))
     ECG_model = VIT(cfg)
-    ckpt_path = os.path.join('/media/Datacenter_storage/jialu/003/Rimita_project/ECG_encoder/logdir_ecg_final/', 'best2.ckpt')
-    ckpt = torch.load(ckpt_path, weights_only=False)  # or weights_only=False if needed
+    ckpt = torch.load(output_ckpt, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
 
 
@@ -108,7 +110,7 @@ with col1:
 
 with col2:
     st.markdown("##### Reference Format")
-    st.image("example_ecg_reference.png", caption="Expected Format", use_container_width=True)
+    st.image("ecg_reference.png", caption="Expected Format", use_container_width=True)
 
 # After file is uploaded, show cropper
 if uploaded_file is not None:
@@ -148,8 +150,8 @@ if uploaded_file is not None:
     input_df = pd.DataFrame([input_dict])
 
     if st.button("Predict Pericarditis Risk"):
-        tabular_model = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/random_forest_pericarditis_model.pkl")
-        tabular_model_calibration = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/calibrated_random_forest_model.pkl")
+        tabular_model = joblib.load("random_forest_pericarditis_model.pkl")
+        tabular_model_calibration = joblib.load("calibrated_random_forest_model.pkl")
         # explainer = shap.TreeExplainer(tabular_model)
         explainer = shap.TreeExplainer(tabular_model)
 
@@ -184,7 +186,6 @@ if uploaded_file is not None:
         calibrated_ecg_probs = calibrator_ecg.predict_proba(ecg_output.reshape(-1, 1))[:, 1]
 
         # Fusion model
-        # fusion_model = joblib.load("/media/Datacenter_storage/jialu/002/Rimita_project/LogisticRegression_model.pkl")
         fusion_model = joblib.load("calibrated_fusion_model.pkl")
         tabular_prob_calibration = tabular_model_calibration.predict_proba(input_df)[0][1]
         fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
