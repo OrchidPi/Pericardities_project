@@ -28,5 +28,3 @@ chmod +x setup.sh
 eval "$($HOME/miniconda/bin/conda shell.bash hook)"
 conda activate py312  # ← replace with your env name from environment.yml
 
-# Launch Streamlit app
-streamlit run app.py
