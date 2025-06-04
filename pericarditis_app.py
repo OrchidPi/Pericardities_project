@@ -1,3 +1,9 @@
+import subprocess
+
+# Run the shell script
+subprocess.run(["bash", "setup.sh"], check=True)
+
+
 import streamlit as st
 import pandas as pd
 import joblib
