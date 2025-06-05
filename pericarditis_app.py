@@ -14,6 +14,8 @@ import io
 import shap
 import matplotlib.pyplot as plt
 from streamlit_cropper import st_cropper
+import tempfile
+import gdown
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -91,16 +93,20 @@ input_dict = {
     'Age 40-80': age_40_80,
     'Age > 80': age_gt_80
 }
-
-url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
-output_ckpt = "ECG_model.ckpt"
-gdown.download(url, output_ckpt, quiet=False)
+with tempfile.NamedTemporaryFile(suffix=".ckpt", delete=False) as tmp:
+    tmp_path = tmp.name
+    gdown.download("https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf", tmp_path, quiet=False)
+# url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
+# output_ckpt = "ECG_model.ckpt"
+# gdown.download(url, output_ckpt, quiet=False)
 
 with open('./cfg.json') as f:
     cfg = edict(json.load(f))
     ECG_model = VIT(cfg)
-    ckpt = torch.load(output_ckpt, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    ckpt = torch.load(tmp_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
+
+os.remove(tmp_path)
 
 
 col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference
@@ -194,8 +200,14 @@ if uploaded_file is not None:
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
+            st.write(f"Optimal Threshold: 13.13%")
+            st.write(f"Positive predictive value (PPV): 27.54%")
         with col2:
             st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
+            st.write(f"Optimal Threshold: 13.44%")
+            st.write(f"Positive predictive value (PPV): 33.80%")
         with col3:
             st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
+            st.write(f"Optimal Threshold: 9.72%")
+            st.write(f"Positive predictive value (PPV): 34.84%")
 
