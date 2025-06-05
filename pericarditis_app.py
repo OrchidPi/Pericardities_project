@@ -24,12 +24,11 @@ st.title("Pericarditis Risk Calculator")
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.subheader("Gender")
+    st.subheader("Demographic factors")
     gender = st.radio("Gender", ["Male", "Female", "Unknown"], index=2)
     male = 1 if gender == "Male" else 0
     female = 1 if gender == "Female" else 0
 
-    st.subheader("Age")
     age = st.number_input("Enter Age", min_value=0, max_value=120, step=1, value=None, format="%i")
 
     # Default all age groups to 0
@@ -42,24 +41,24 @@ with col1:
         else:
             age_gt_80 = 1
 
-    st.subheader("Behavioral")
-    smoking = st.radio("Smoking", ["Yes", "Never", "Unknown"], index=2)
-
 with col2:
-    st.subheader("Comorbidities")
+    st.subheader("Clinic condition")
+    cancer = st.radio("Cancer", ["Yes", "No", "Unknown"], index=2)
+    autoimmune = st.radio("Autoimmune Disease", ["Yes", "No", "Unknown"], index=2)
+    smoking = st.radio("Smoking", ["Yes", "Never", "Unknown"], index=2)
     hypertension = st.radio("Hypertension", ["Yes", "No", "Unknown"], index=2)
     hyperlipidemia = st.radio("Hyperlipidemia", ["Yes", "No", "Unknown"], index=2)
     diabetes = st.radio("Diabetes", ["Yes", "No", "Unknown"], index=2)
-    cad = st.radio("Coronary Artery Disease (CAD)", ["Yes", "No", "Unknown"], index=2)
-    hf = st.radio("Heart Failure (HF)", ["Yes", "No", "Unknown"], index=2)
+    
 with col3:
     st.subheader(" ")
     af = st.radio("Atrial Fibrillation (AF)", ["Yes", "No", "Unknown"], index=2)
     mi = st.radio("Myocardial Infarction (MI)", ["Yes", "No", "Unknown"], index=2)
     stroke = st.radio("Stroke", ["Yes", "No", "Unknown"], index=2)
-    cancer = st.radio("Cancer", ["Yes", "No", "Unknown"], index=2)
-    autoimmune = st.radio("Autoimmune Disease", ["Yes", "No", "Unknown"], index=2)
+    cad = st.radio("Coronary Artery Disease (CAD)", ["Yes", "No", "Unknown"], index=2)
+    hf = st.radio("Heart Failure (HF)", ["Yes", "No", "Unknown"], index=2)
 
+    
 def map_value(x):
     return {"Yes": 1, "No": 0, "Never": 0, "Unknown": -1}[x]
 
