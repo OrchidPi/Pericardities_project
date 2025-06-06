@@ -8,7 +8,10 @@ def ensure_package(package):
         subprocess.check_call([sys.executable, "-m", "pip", "install", package])
         os.execv(sys.executable, [sys.executable] + sys.argv)  # Force restart
 
-ensure_package("joblib")
+
+# Ensure required packages are installed
+for pkg in ["joblib", "torch"]:
+    ensure_package(pkg)
 
 import joblib
 import streamlit as st
