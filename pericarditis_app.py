@@ -10,7 +10,7 @@ def ensure_package(package):
 
 
 # Ensure required packages are installed
-for pkg in ["joblib", "torch"]:
+for pkg in ["joblib", "torch", "opencv"]:
     ensure_package(pkg)
 
 import joblib
