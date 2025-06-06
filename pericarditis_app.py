@@ -1,3 +1,5 @@
+import os
+import sys
 import subprocess
 import importlib
 
@@ -28,8 +30,6 @@ ensure_package("torchvision")
 ensure_package("nltk")
 
 
-import sys
-import os
 import joblib
 import streamlit as st
 import pandas as pd
