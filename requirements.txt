@@ -9,3 +9,4 @@ streamlit-cropper
 transformers
 torchvision
 nltk
+pandas
