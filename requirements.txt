@@ -1,7 +1,7 @@
 pandas
 joblib
 torch
-opencv-python-headless
+opencv-python
 easydict
 shap
 matplotlib
