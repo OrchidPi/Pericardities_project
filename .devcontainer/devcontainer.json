@@ -1,18 +1,18 @@
 {
-  "name": "Streamlit Conda Environment",
-  "image": "mcr.microsoft.com/devcontainers/python:conda-3.12",
-  "postCreateCommand": "conda env create -f environment.yml && conda init bash && echo '✅ Conda environment created'",
+  "name": "Streamlit Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",  // Python base
+  "postCreateCommand": "pip install -r requirements.txt",  // Install dependencies
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python"]
     }
   },
-  "forwardPorts": [8501],
+  "forwardPorts": [8501],  // Make port 8501 available for preview
   "portsAttributes": {
     "8501": {
       "label": "Streamlit App",
       "onAutoForward": "openPreview"
     }
   },
-  "postAttachCommand": "bash -c 'source ~/.bashrc && conda activate base && streamlit run pericarditis_app.py --server.enableCORS false --server.enableXsrfProtection false'"
+  "postAttachCommand": "streamlit run pericarditis_app.py --server.enableCORS false --server.enableXsrfProtection false"
 }
