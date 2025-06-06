@@ -30,7 +30,7 @@ with col1:
     male = 1 if gender == "Male" else 0
     female = 1 if gender == "Female" else 0
 
-    age = st.number_input("Enter Age", min_value=0, max_value=120, step=1, value=None, format="%i")
+    age = st.number_input("Enter Age", min_value=0, max_value=120, step=1, value=40)
 
     # Default all age groups to 0
     age_lt_40, age_40_80, age_gt_80 = 0, 0, 0
