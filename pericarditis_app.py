@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-import importlib
+import importlib.util
 
 try:
     subprocess.run(["apt-get", "update"], check=True)
