@@ -1,3 +1,7 @@
+import subprocess
+
+subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+
 import streamlit as st
 import pandas as pd
 import joblib
@@ -16,6 +20,7 @@ import matplotlib.pyplot as plt
 from streamlit_cropper import st_cropper
 import tempfile
 import gdown
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
