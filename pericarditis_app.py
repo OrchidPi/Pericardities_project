@@ -6,13 +6,23 @@ import os
 def ensure_package(package, pip_name=None):
     pip_name = pip_name or package
     if importlib.util.find_spec(package) is None:
+        print(f"🔧 Installing {pip_name} ...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", pip_name])
-        os.execv(sys.executable, [sys.executable] + sys.argv)  # Restart to load
+        os.execv(sys.executable, [sys.executable] + sys.argv)  # Restart the script
 
-# Install required packages
+# List of packages
 ensure_package("joblib")
 ensure_package("torch")
-ensure_package("cv2", "opencv-python")
+ensure_package("cv2", "opencv-python")         # 'cv2' is provided by 'opencv-python'
+ensure_package("easydict")
+ensure_package("shap")
+ensure_package("matplotlib")
+ensure_package("gdown")
+ensure_package("streamlit_cropper", "streamlit-cropper")
+ensure_package("transformers")
+ensure_package("torchvision")
+ensure_package("nltk")
+
 
 import joblib
 import streamlit as st
