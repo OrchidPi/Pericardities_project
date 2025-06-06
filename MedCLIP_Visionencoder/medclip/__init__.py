@@ -10,5 +10,3 @@ from .modeling_medclip import (
     PromptTuningClassifier, # make classification based on prompt tuning
     SuperviseClassifier, # make classification by appending a classifier to the vision encoder
 )
-
-from .dataset import MedCLIPProcessor

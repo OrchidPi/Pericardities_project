@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 # from medclip import MedCLIPModel, MedCLIPVisionModelViT, MedCLIPVisionModel
-from MedCLIP.medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
+from MedCLIP_Visionencoder.medclip.modeling_medclip import MedCLIPVisionModelViT
 
 
 class VIT(nn.Module):
