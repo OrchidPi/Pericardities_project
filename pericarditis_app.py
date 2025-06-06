@@ -1,7 +1,3 @@
-import subprocess
-
-subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
-
 import streamlit as st
 import pandas as pd
 import joblib
