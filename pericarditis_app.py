@@ -1,17 +1,18 @@
+import importlib.util
 import subprocess
 import sys
-import importlib.util
 import os
 
-def ensure_package(package):
+def ensure_package(package, pip_name=None):
+    pip_name = pip_name or package
     if importlib.util.find_spec(package) is None:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        os.execv(sys.executable, [sys.executable] + sys.argv)  # Force restart
+        subprocess.check_call([sys.executable, "-m", "pip", "install", pip_name])
+        os.execv(sys.executable, [sys.executable] + sys.argv)  # Restart to load
 
-
-# Ensure required packages are installed
-for pkg in ["joblib", "torch", "opencv"]:
-    ensure_package(pkg)
+# Install required packages
+ensure_package("joblib")
+ensure_package("torch")
+ensure_package("cv2", "opencv-python")
 
 import joblib
 import streamlit as st
