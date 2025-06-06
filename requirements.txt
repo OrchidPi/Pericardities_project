@@ -1,3 +1,4 @@
+pandas
 joblib
 torch
 opencv-python-headless
@@ -9,4 +10,3 @@ streamlit-cropper
 transformers
 torchvision
 nltk
-pandas
