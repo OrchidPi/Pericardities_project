@@ -1,6 +1,14 @@
+import subprocess
+import sys
+
+try:
+    import joblib
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "joblib"])
+    import joblib
+
 import streamlit as st
 import pandas as pd
-import joblib
 from PIL import Image
 import torch
 import cv2
