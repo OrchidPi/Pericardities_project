@@ -1,12 +1,16 @@
 import subprocess
 import sys
+import importlib.util
+import os
 
-try:
-    import joblib
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "joblib"])
-    import joblib
+def ensure_package(package):
+    if importlib.util.find_spec(package) is None:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        os.execv(sys.executable, [sys.executable] + sys.argv)  # Force restart
 
+ensure_package("joblib")
+
+import joblib
 import streamlit as st
 import pandas as pd
 from PIL import Image
