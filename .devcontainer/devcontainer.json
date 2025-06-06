@@ -1,28 +1,18 @@
 {
-  "name": "Python 3",
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+  "name": "Streamlit Conda Environment",
+  "image": "mcr.microsoft.com/devcontainers/python:conda-3.12",
+  "postCreateCommand": "conda env create -f environment.yml && conda init bash && echo '✅ Conda environment created'",
   "customizations": {
-    "codespaces": {
-      "openFiles": [
-        "README.md",
-        "pericarditis_app.py"
-      ]
-    },
     "vscode": {
-      "settings": {},
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance"
-      ]
+      "extensions": ["ms-python.python"]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && apt update && apt upgrade -y && xargs apt install -y < packages.txt; [ -f requirements.txt ] && pip install --no-cache-dir -r requirements.txt; pip install streamlit && echo '✅ Packages installed'",
-  "postAttachCommand": "streamlit run pericarditis_app.py --server.enableCORS false --server.enableXsrfProtection false",
   "forwardPorts": [8501],
   "portsAttributes": {
     "8501": {
       "label": "Streamlit App",
       "onAutoForward": "openPreview"
     }
-  }
+  },
+  "postAttachCommand": "bash -c 'source ~/.bashrc && conda activate base && streamlit run pericarditis_app.py --server.enableCORS false --server.enableXsrfProtection false'"
 }
