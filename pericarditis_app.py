@@ -121,22 +121,26 @@ with col2:
     st.markdown("##### Reference Format")
     st.image("ecg_reference.png", caption="Expected Format", use_column_width=True)
 
-# After file is uploaded, show cropper
+
 if uploaded_file is not None:
-    st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
-
     pil_image = Image.open(uploaded_file).convert("RGB")
+    pil_image = pil_image.resize((600, 400))  # Resize to avoid layout issues
 
-    # Display cropping widget
+    st.markdown("### ✂️ Crop ECG to remove metadata")
+
     cropped_image = st_cropper(
         pil_image,
         realtime_update=True,
         box_color="#FF4B4B",
         aspect_ratio=None,
-        return_type="image"
+        return_type="image",
+        key="ecg_cropper"
     )
 
-    st.image(cropped_image, caption="Cropped ECG", use_column_width=True)
+    if cropped_image is not None:
+        st.image(cropped_image, caption="Cropped ECG", use_column_width=True)
+
+        
     # Convert cropped image to array
     image = np.array(cropped_image)
     h, w, _ = image.shape
