@@ -111,6 +111,7 @@ with open('./cfg.json') as f:
     ckpt = torch.load(ckpt_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
 
+st.set_page_config(page_title="ECG Cropper", layout="wide")
 
 col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference
 
@@ -121,12 +122,12 @@ with col2:
     st.markdown("##### Reference Format")
     st.image("ecg_reference.png", caption="Expected Format", use_column_width=True)
 
-
+# After file is uploaded, show cropper
 if uploaded_file is not None:
-    pil_image = Image.open(uploaded_file).convert("RGB")
-    pil_image = pil_image.resize((600, 400))  # Resize to avoid layout issues
+    st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
 
-    st.markdown("### ✂️ Crop ECG to remove metadata")
+    pil_image = Image.open(uploaded_file).convert("RGB")
+    pil_image = pil_image.resize((600, 400))  # ✅ Resize helps interactivity
 
     cropped_image = st_cropper(
         pil_image,
@@ -134,13 +135,12 @@ if uploaded_file is not None:
         box_color="#FF4B4B",
         aspect_ratio=None,
         return_type="image",
-        key="ecg_cropper"
+        key="ecg_cropper"  # ✅ Helps Streamlit track widget state
     )
 
     if cropped_image is not None:
         st.image(cropped_image, caption="Cropped ECG", use_column_width=True)
 
-        
     # Convert cropped image to array
     image = np.array(cropped_image)
     h, w, _ = image.shape
