@@ -132,7 +132,7 @@ if uploaded_file is not None:
     # Display cropper
     cropped_image = st_cropper(
         pil_image,
-        realtime_update=True,
+        realtime_update=False,
         box_color="#FF4B4B",
         aspect_ratio=None,
         return_type="image",
