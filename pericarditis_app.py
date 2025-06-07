@@ -131,7 +131,7 @@ if uploaded_file is not None:
     st.title("Cropped ECG")
     st.image(cropped_pic, output_format="PNG")
     
-    pil_img = Image.open(cropped_pic).convert("RGB")  # Ensure 3 channels
+    pil_img = Image.open(io.BytesIO(cropped_pic)).convert("RGB")
     image = np.array(pil_img)
     h, w, c = image.shape
 
