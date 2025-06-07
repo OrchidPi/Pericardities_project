@@ -126,7 +126,7 @@ if uploaded_file is not None:
 
     uploaded_bytes = uploaded_file.read()
 
-    cropped_pic = st_cropperjs(uploaded_file=uploaded_bytes, btn_text="Confirm Crop", key="foo")
+    cropped_pic = st_cropperjs(pic=uploaded_bytes, btn_text="Confirm Crop", key="foo")
 
     if cropped_pic:
         st.title("Cropped ECG")
