@@ -120,33 +120,42 @@ with col2:
     st.markdown("##### Reference Format")
     st.image("ecg_reference.png", caption="Expected Format")
 
-# After file is uploaded, show cropper
 if uploaded_file is not None:
     st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
 
     uploaded_bytes = uploaded_file.read()
+    uploaded_io = io.BytesIO(uploaded_bytes)  # ✅ reusable stream
+
+    # Preview original image before cropping
+    try:
+        st.image(uploaded_io, caption="Uploaded ECG")  # ✅ Show image safely
+    except Exception as e:
+        st.error(f"Cannot preview uploaded image: {e}")
+        st.stop()
 
     cropped_pic = st_cropperjs(pic=uploaded_bytes, btn_text="Confirm Crop", key="foo")
 
-    st.title("Cropped ECG")
-    st.image(cropped_pic, output_format="PNG")
+    if cropped_pic:
+        st.title("Cropped ECG")
+        st.image(cropped_pic, output_format="PNG")
+
+        pil_img = Image.open(io.BytesIO(cropped_pic)).convert("RGB")
+        image = np.array(pil_img)
+        h, w, c = image.shape
+
+
+        # Continue preprocessing as before
+        intermediate_size = (w, w)
+        final_size = (512, 512)
+        padded_image = pad_to_square(image, intermediate_size)
+        final_image = cv2.resize(padded_image, final_size, interpolation=cv2.INTER_AREA)
     
-    pil_img = Image.open(io.BytesIO(cropped_pic)).convert("RGB")
-    image = np.array(pil_img)
-    h, w, c = image.shape
-
-    # Continue preprocessing as before
-    intermediate_size = (w, w)
-    final_size = (512, 512)
-    padded_image = pad_to_square(image, intermediate_size)
-    final_image = cv2.resize(padded_image, final_size, interpolation=cv2.INTER_AREA)
-
-    # Normalize and convert to tensor
-    max_v = final_image.max()
-    min_v = final_image.min()
-    norm_image = (final_image - min_v) / (max_v - min_v)
-    norm_image = norm_image.transpose(2, 0, 1)
-    image_tensor = torch.tensor(norm_image, dtype=torch.float32).unsqueeze(0)
+        # Normalize and convert to tensor
+        max_v = final_image.max()
+        min_v = final_image.min()
+        norm_image = (final_image - min_v) / (max_v - min_v)
+        norm_image = norm_image.transpose(2, 0, 1)
+        image_tensor = torch.tensor(norm_image, dtype=torch.float32).unsqueeze(0)
 
     st.success("✅ Cropped image ready for prediction.")
 
