@@ -94,20 +94,22 @@ input_dict = {
     'Age 40-80': age_40_80,
     'Age > 80': age_gt_80
 }
-with tempfile.NamedTemporaryFile(suffix=".ckpt", delete=False) as tmp:
-    tmp_path = tmp.name
-    gdown.download("https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf", tmp_path, quiet=False)
-# url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
-# output_ckpt = "ECG_model.ckpt"
-# gdown.download(url, output_ckpt, quiet=False)
+
+ckpt_path = "checkpoints/my_model.ckpt"
+ckpt_url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
+
+# Ensure checkpoints directory exists
+os.makedirs("checkpoints", exist_ok=True)
+
+# Download only if not already downloaded
+if not os.path.exists(ckpt_path):
+    gdown.download(ckpt_url, ckpt_path, quiet=False)
 
 with open('./cfg.json') as f:
     cfg = edict(json.load(f))
     ECG_model = VIT(cfg)
-    ckpt = torch.load(tmp_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
+    ckpt = torch.load(ckpt_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
-
-os.remove(tmp_path)
 
 
 col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference

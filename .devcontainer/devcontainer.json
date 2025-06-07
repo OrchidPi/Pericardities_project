@@ -1,7 +1,7 @@
 {
   "name": "Streamlit Dev Environment",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",  // Python base
-  "postCreateCommand": "pip install -r requirements.txt",  // Install dependencies
+  "postCreateCommand": "pip install -r requirements.txt && mkdir -p checkpoints && gdown https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf -O checkpoints/ECG_model.ckpt",
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python"]
