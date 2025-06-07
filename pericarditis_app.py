@@ -124,17 +124,17 @@ with col2:
 if uploaded_file is not None:
     st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
 
-    # Read file bytes
-    image_bytes = uploaded_file.read()
+    uploaded_bytes = uploaded_file.read()
 
-    # Use st_cropperjs (JavaScript-based)
-    cropped_image = st_cropperjs(pic=image_bytes, btn_text="Confirm Crop", key="ecg_cropperjs")
+    cropped_pic = st_cropperjs(uploaded_file=uploaded_bytes, btn_text="Confirm Crop", key="foo")
 
-    if cropped_image is not None:
-        st.image(cropped_image, caption="Cropped ECG")
-
-    image = np.array(cropped_image)
-    h, w, _ = image.shape
+    if cropped_pic:
+        st.title("Cropped ECG")
+        st.image(cropped_pic, output_format="PNG")
+        
+        pil_img = Image.open(cropped_pic).convert("RGB")  # Ensure 3 channels
+        image = np.array(pil_img)
+        h, w, c = image.shape
 
     # Continue preprocessing as before
     intermediate_size = (w, w)
