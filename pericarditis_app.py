@@ -20,7 +20,7 @@ import gdown
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
+st.set_page_config(page_title="ECG Cropper", layout="wide")
 st.title("Pericarditis Risk Calculator")
 
 col1, col2, col3 = st.columns(3)
@@ -110,8 +110,6 @@ with open('./cfg.json') as f:
     ECG_model = VIT(cfg)
     ckpt = torch.load(ckpt_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
-
-st.set_page_config(page_title="ECG Cropper", layout="wide")
 
 col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference
 
