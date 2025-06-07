@@ -133,7 +133,7 @@ if uploaded_file is not None:
     if cropped_image is not None:
         st.image(cropped_image, caption="Cropped ECG")
 
-    image = np.array(cropped_img)
+    image = np.array(cropped_image)
     h, w, _ = image.shape
 
     # Continue preprocessing as before
