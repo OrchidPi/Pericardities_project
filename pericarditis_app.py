@@ -95,7 +95,7 @@ input_dict = {
     'Age > 80': age_gt_80
 }
 
-ckpt_path = "checkpoints/my_model.ckpt"
+ckpt_path = "checkpoints/ECG_model.ckpt"
 ckpt_url = "https://drive.google.com/uc?id=1HzCghcteqo7OG_DBjiGZCFepSprTe-Pf"
 
 # Ensure checkpoints directory exists
