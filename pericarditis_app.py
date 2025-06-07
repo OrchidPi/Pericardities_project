@@ -14,6 +14,7 @@ import io
 import shap
 import matplotlib.pyplot as plt
 from streamlit_cropper import st_cropper
+from streamlit_cropperjs import st_cropperjs
 import tempfile
 import gdown
 
@@ -109,48 +110,30 @@ with open('./cfg.json') as f:
     ckpt = torch.load(ckpt_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
     ECG_model.load_state_dict(ckpt['state_dict'], strict=False)
 
-col1, col2 = st.columns([2, 1])  # Wider for uploader, narrower for reference
+
+col1, col2 = st.columns([2, 1])
 
 with col1:
-    uploaded_file = st.file_uploader("Upload ECG Image", type=["png", "jpg", "jpeg"])
+    uploaded_file = st.file_uploader("Upload ECG Image", type=["png", "jpg", "jpeg"], key="uploaded_pic")
 
 with col2:
     st.markdown("##### Reference Format")
-    st.image("ecg_reference.png", caption="Expected Format", use_column_width=True)
+    st.image("ecg_reference.png", caption="Expected Format", use_container_width=True)
 
-# State management: store cropped image
-if "final_cropped" not in st.session_state:
-    st.session_state.final_cropped = None
-
-# Show cropper if file is uploaded
+# After file is uploaded, show cropper
 if uploaded_file is not None:
-    st.markdown("### ✂️ Crop the ECG to remove text or device info")
+    st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
 
-    pil_image = Image.open(uploaded_file).convert("RGB")
-    pil_image = pil_image.resize((600, 400))
+    # Read file bytes
+    image_bytes = uploaded_file.read()
 
-    # Display cropper
-    cropped_image = st_cropper(
-        pil_image,
-        realtime_update=False,
-        box_color="#FF4B4B",
-        aspect_ratio=None,
-        return_type="image",
-        key="ecg_cropper"
-    )
+    # Use st_cropperjs (JavaScript-based)
+    cropped_image = st_cropperjs(pic=image_bytes, btn_text="Confirm Crop", key="ecg_cropperjs")
 
-    # Confirm button to finalize the crop
-    if st.button("✅ Confirm Crop"):
-        st.session_state.final_cropped = cropped_image
-        st.success("Cropped image saved!")
+    if cropped_image is not None:
+        st.image(cropped_image, caption="Cropped ECG", use_container_width=True)
 
-# Display the confirmed cropped image
-if st.session_state.final_cropped is not None:
-    st.markdown("### ✅ Final Cropped ECG")
-    st.image(st.session_state.final_cropped, use_column_width=True)
-
-    # Convert cropped image to array
-    image = np.array(cropped_image)
+    image = np.array(cropped_img)
     h, w, _ = image.shape
 
     # Continue preprocessing as before
