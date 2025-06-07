@@ -19,8 +19,6 @@ import gdown
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-st.set_page_config(page_title="ECG Cropper", layout="wide")
 st.title("Pericarditis Risk Calculator")
 
 col1, col2, col3 = st.columns(3)
@@ -120,24 +118,36 @@ with col2:
     st.markdown("##### Reference Format")
     st.image("ecg_reference.png", caption="Expected Format", use_column_width=True)
 
-# After file is uploaded, show cropper
+# State management: store cropped image
+if "final_cropped" not in st.session_state:
+    st.session_state.final_cropped = None
+
+# Show cropper if file is uploaded
 if uploaded_file is not None:
-    st.markdown("### ✂️ Please crop the ECG image to remove text or device info (keep waveform area only)")
+    st.markdown("### ✂️ Crop the ECG to remove text or device info")
 
     pil_image = Image.open(uploaded_file).convert("RGB")
-    pil_image = pil_image.resize((600, 400))  # ✅ Resize helps interactivity
+    pil_image = pil_image.resize((600, 400))
 
+    # Display cropper
     cropped_image = st_cropper(
         pil_image,
         realtime_update=True,
         box_color="#FF4B4B",
         aspect_ratio=None,
         return_type="image",
-        key="ecg_cropper"  # ✅ Helps Streamlit track widget state
+        key="ecg_cropper"
     )
 
-    if cropped_image is not None:
-        st.image(cropped_image, caption="Cropped ECG", use_column_width=True)
+    # Confirm button to finalize the crop
+    if st.button("✅ Confirm Crop"):
+        st.session_state.final_cropped = cropped_image
+        st.success("Cropped image saved!")
+
+# Display the confirmed cropped image
+if st.session_state.final_cropped is not None:
+    st.markdown("### ✅ Final Cropped ECG")
+    st.image(st.session_state.final_cropped, use_column_width=True)
 
     # Convert cropped image to array
     image = np.array(cropped_image)
