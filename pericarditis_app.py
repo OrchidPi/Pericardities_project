@@ -128,13 +128,12 @@ if uploaded_file is not None:
 
     cropped_pic = st_cropperjs(pic=uploaded_bytes, btn_text="Confirm Crop", key="foo")
 
-    if cropped_pic:
-        st.title("Cropped ECG")
-        st.image(cropped_pic, output_format="PNG")
-        
-        pil_img = Image.open(cropped_pic).convert("RGB")  # Ensure 3 channels
-        image = np.array(pil_img)
-        h, w, c = image.shape
+    st.title("Cropped ECG")
+    st.image(cropped_pic, output_format="PNG")
+    
+    pil_img = Image.open(cropped_pic).convert("RGB")  # Ensure 3 channels
+    image = np.array(pil_img)
+    h, w, c = image.shape
 
     # Continue preprocessing as before
     intermediate_size = (w, w)
