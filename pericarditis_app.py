@@ -118,7 +118,7 @@ with col1:
 
 with col2:
     st.markdown("##### Reference Format")
-    st.image("ecg_reference.png", caption="Expected Format", use_container_width=True)
+    st.image("ecg_reference.png", caption="Expected Format")
 
 # After file is uploaded, show cropper
 if uploaded_file is not None:
@@ -131,7 +131,7 @@ if uploaded_file is not None:
     cropped_image = st_cropperjs(pic=image_bytes, btn_text="Confirm Crop", key="ecg_cropperjs")
 
     if cropped_image is not None:
-        st.image(cropped_image, caption="Cropped ECG", use_container_width=True)
+        st.image(cropped_image, caption="Cropped ECG")
 
     image = np.array(cropped_img)
     h, w, _ = image.shape
@@ -178,7 +178,7 @@ if uploaded_file is not None:
         plt.close()
         buf.seek(0)
 
-        st.image(buf, caption="SHAP Force Plot for Tabular Model", use_column_width=True)
+        st.image(buf, caption="SHAP Force Plot for Tabular Model")
 
 
         # ECG model
