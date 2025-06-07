@@ -11,4 +11,5 @@ nltk
 scikit-learn
 shap
 streamlit-cropper
+streamlit_cropperjs
 gdown
