@@ -20,7 +20,11 @@ import gdown
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-st.title("Pericarditis Risk Calculator")
+col1, col2 = st.columns([1, 6])
+with col1:
+    st.image("config/Mayo-Clinic-Secondary-Application-922x1024.webp", width=80)
+with col2:
+    st.title("Pericarditis Risk Calculator")
 
 col1, col2, col3 = st.columns(3)
 with col1:
