@@ -186,7 +186,7 @@ if uploaded_file is not None:
 
             with st.expander("See results"):
             
-                st.subheader("Pericarditis Risk by ECG Model")
+                st.markdown("Pericarditis Risk by ECG Model")
 
                 if prediction == "Positive":
                     st.markdown(
@@ -267,7 +267,7 @@ if uploaded_file is not None:
                     risk_percent = prob * 100
                     prediction = "Positive" if prob > threshold else "Negative"
                     # st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
-                    st.subheader("Pericarditis Risk by Tabular Model:")
+                    st.markdown("Pericarditis Risk by Tabular Model:")
 
                     if prediction == "Positive":
                         st.markdown(
@@ -287,7 +287,7 @@ if uploaded_file is not None:
                     risk_percent = prob * 100
                     prediction = "Positive" if prob > threshold else "Negative"
                     # st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
-                    st.subheader("Pericarditis Risk by ECG Model:")
+                    st.markdown("Pericarditis Risk by ECG Model:")
 
                     if prediction == "Positive":
                         st.markdown(
@@ -307,7 +307,7 @@ if uploaded_file is not None:
                     risk_percent = prob * 100
                     prediction = "Positive" if prob > threshold else "Negative"
                     # st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
-                    st.subheader("Pericarditis Risk by Fusion Model:")
+                    st.markdown("Pericarditis Risk by Fusion Model:")
 
                     if prediction == "Positive":
                         st.markdown(
