@@ -140,7 +140,7 @@ if uploaded_file is not None:
     cropped_pic = st_cropperjs(pic=uploaded_bytes, btn_text="Confirm Crop", key="foo")
 
     if cropped_pic:
-        st.title("Cropped ECG")
+        st.title("*Cropped ECG*")
         st.image(cropped_pic, output_format="PNG")
 
         pil_img = Image.open(io.BytesIO(cropped_pic)).convert("RGB")
@@ -184,7 +184,7 @@ if uploaded_file is not None:
             risk_percent = prob * 100
             prediction = "Positive" if prob > threshold else "Negative"
 
-            with st.expander("**See results**"):
+            with st.expander("*See results*"):
             
                 st.markdown("**Pericarditis Risk by ECG Model:**")
 
@@ -259,7 +259,7 @@ if uploaded_file is not None:
             fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
             fusion_prob = fusion_model.predict_proba(fusion_input)[0][1]
 
-            with st.expander("**See results**"):
+            with st.expander("*See results*"):
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     threshold = 0.1313
