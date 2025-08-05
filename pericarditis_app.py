@@ -166,58 +166,159 @@ if uploaded_file is not None:
     input_df = pd.DataFrame([input_dict])
 
     if st.button("Predict Pericarditis Risk"):
-        tabular_model = joblib.load("random_forest_pericarditis_model.pkl")
-        tabular_model_calibration = joblib.load("calibrated_random_forest_model.pkl")
-        # explainer = shap.TreeExplainer(tabular_model)
-        explainer = shap.TreeExplainer(tabular_model)
+        # Exclude age and gender columns 
+        columns_excl_age = [col for col in input_df.columns if not col.startswith("Age") and col not in ["Male", "Female"]]
+        input_all_unknown = (input_df[columns_excl_age] == -1).all(axis=1).values[0]
+
+        # === Only ECG model (Only ECG image uploaded) ===
+        if input_all_unknown == True:
+            with torch.no_grad():
+                ecg_output, _ = ECG_model(image_tensor)
+                ecg_prob = torch.sigmoid(ecg_output.view(-1)).cpu().numpy()[0]
+
+            calibrator_ecg = joblib.load("ecg_logit_calibrator.pkl")
+            calibrated_ecg_probs = calibrator_ecg.predict_proba(ecg_output.view(-1).cpu().numpy().reshape(-1, 1))[:, 1]
+
+            threshold = 0.1344
+            prob = calibrated_ecg_probs[0]
+            risk_percent = prob * 100
+            prediction = "Positive" if prob > threshold else "Negative"
+
+            with st.expander("**See results**"):
+            
+                st.markdown("**Pericarditis Risk by ECG Model:**")
+
+                if prediction == "Positive":
+                    st.markdown(
+                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                        f'{risk_percent:.2f}% — Prediction: {prediction}'
+                    )
+
+                st.write(f"Optimal Threshold: {threshold*100:.2f}%")
+                st.write("Positive predictive value (PPV): 33.80%")
+
+
+        else:
+            tabular_model = joblib.load("random_forest_pericarditis_model.pkl")
+            tabular_model_calibration = joblib.load("calibrated_random_forest_model.pkl")
+            explainer = shap.TreeExplainer(tabular_model)
 
     
-        # Tabular model
-        tabular_prob = tabular_model.predict_proba(input_df)[0][1]
-        shap_values = explainer.shap_values(input_df)
+            # Tabular model
+            tabular_prob = tabular_model.predict_proba(input_df)[0][1]
+            shap_values = explainer.shap_values(input_df)
+            
+            # Mapping for custom names
+            name_mapping = {
+                "AF": "Atrial Fibrillation",
+                "MI": "Myocardial Infarction",
+                "CAD": "Coronary Artery Disease",
+                "HF": "Heart Failure"
+            }
 
-        plt.figure()
-        shap.force_plot(
-            explainer.expected_value[0],
-            shap_values[:,:,0][0],
-            input_df.iloc[0],
-            matplotlib=True,
-            show=False
-        )
+            # Clean values (remove "= ..." if present)
+            feature_names_clean = input_df.columns.str.replace(r"\s*=\s*[-+]?[0-9]*\.?[0-9]+", "", regex=True)
 
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight')
-        plt.close()
-        buf.seek(0)
-
-        st.image(buf, caption="SHAP Force Plot for Tabular Model")
+            # Apply custom name mapping
+            feature_names_clean = [name_mapping.get(name, name) for name in feature_names_clean]
 
 
-        # ECG model
-        with torch.no_grad():
-            ecg_output, _ = ECG_model(image_tensor)
-            ecg_prob = torch.sigmoid(ecg_output.view(-1)).cpu().numpy()[0]
+            plt.figure()
+            shap.force_plot(
+                explainer.expected_value[0],
+                shap_values[:,:,0][0],
+                feature_names=feature_names_clean,
+                # input_df.iloc[0],
+                matplotlib=True,
+                show=False
+            )
 
-        calibrator_ecg = joblib.load("ecg_logit_calibrator.pkl")
-        calibrated_ecg_probs = calibrator_ecg.predict_proba(ecg_output.reshape(-1, 1))[:, 1]
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight')
+            plt.close()
+            buf.seek(0)
+    
+            st.image(buf, caption="SHAP Force Plot for Tabular Model")
+    
 
-        # Fusion model
-        fusion_model = joblib.load("calibrated_fusion_model.pkl")
-        tabular_prob_calibration = tabular_model_calibration.predict_proba(input_df)[0][1]
-        fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
-        fusion_prob = fusion_model.predict_proba(fusion_input)[0][1]
+            # ECG model
+            with torch.no_grad():
+                ecg_output, _ = ECG_model(image_tensor)
+                ecg_prob = torch.sigmoid(ecg_output.view(-1)).cpu().numpy()[0]
+    
+            calibrator_ecg = joblib.load("ecg_logit_calibrator.pkl")
+            calibrated_ecg_probs = calibrator_ecg.predict_proba(ecg_output.reshape(-1, 1))[:, 1]
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
-            st.write(f"Optimal Threshold: 13.13%")
-            st.write(f"Positive predictive value (PPV): 27.54%")
-        with col2:
-            st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
-            st.write(f"Optimal Threshold: 13.44%")
-            st.write(f"Positive predictive value (PPV): 33.80%")
-        with col3:
-            st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
-            st.write(f"Optimal Threshold: 9.72%")
-            st.write(f"Positive predictive value (PPV): 34.84%")
+            # Fusion model
+            fusion_model = joblib.load("calibrated_fusion_model.pkl")
+            tabular_prob_calibration = tabular_model_calibration.predict_proba(input_df)[0][1]
+            fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
+            fusion_prob = fusion_model.predict_proba(fusion_input)[0][1]
 
+            with st.expander("**See results**"):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    threshold = 0.1313
+                    prob = tabular_prob_calibration
+                    risk_percent = prob * 100
+                    prediction = "Positive" if prob > threshold else "Negative"
+                    # st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
+                    st.markdown("**Pericarditis Risk by Tabular Model:**")
+
+                    if prediction == "Positive":
+                        st.markdown(
+                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                        unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                        f'{risk_percent:.2f}% — Prediction: {prediction}'
+                        )
+                        
+                    st.write(f"Optimal Threshold: 13.13%")
+                    st.write(f"Positive predictive value (PPV): 27.54%")
+                with col2:
+                    threshold = 0.1344
+                    prob = calibrated_ecg_probs[0]
+                    risk_percent = prob * 100
+                    prediction = "Positive" if prob > threshold else "Negative"
+                    # st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
+                    st.markdown("**Pericarditis Risk by ECG Model:**")
+
+                    if prediction == "Positive":
+                        st.markdown(
+                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                        unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                        f'{risk_percent:.2f}% — Prediction: {prediction}'
+                        )
+                        
+                    st.write(f"Optimal Threshold: 13.44%")
+                    st.write(f"Positive predictive value (PPV): 33.80%")
+                with col3:
+                    threshold = 0.0972
+                    prob = fusion_prob
+                    risk_percent = prob * 100
+                    prediction = "Positive" if prob > threshold else "Negative"
+                    # st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
+                    st.markdown("**Pericarditis Risk by Fusion Model:**")
+
+                    if prediction == "Positive":
+                        st.markdown(
+                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                        unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                        f'{risk_percent:.2f}% — Prediction: {prediction}'
+                        )
+                        
+                    st.write(f"Optimal Threshold: 9.72%")
+                    st.write(f"Positive predictive value (PPV): 34.84%")
+        
