@@ -184,22 +184,22 @@ if uploaded_file is not None:
             risk_percent = prob * 100
             prediction = "Positive" if prob > threshold else "Negative"
 
-            with st.expander("See results"):
+            # with st.expander("See results"):
             
-                st.markdown("Pericarditis Risk by ECG Model")
+            st.markdown("Pericarditis Risk by ECG Model")
 
-                if prediction == "Positive":
-                    st.markdown(
-                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown(
-                        f'{risk_percent:.2f}% — Prediction: {prediction}'
-                    )
+            if prediction == "Positive":
+                st.markdown(
+                    f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'{risk_percent:.2f}% — Prediction: {prediction}'
+                )
 
-                st.write(f"Optimal Threshold: {threshold*100:.2f}%")
-                st.write("Positive predictive value (PPV): 33.80%")
+            st.write(f"Optimal Threshold: {threshold*100:.2f}%")
+            st.write("Positive predictive value (PPV): 33.80%")
 
 
         else:
@@ -210,40 +210,6 @@ if uploaded_file is not None:
     
             # Tabular model
             tabular_prob = tabular_model.predict_proba(input_df)[0][1]
-            shap_values = explainer.shap_values(input_df)
-            
-            # Mapping for custom names
-            name_mapping = {
-                "AF": "Atrial Fibrillation",
-                "MI": "Myocardial Infarction",
-                "CAD": "Coronary Artery Disease",
-                "HF": "Heart Failure"
-            }
-
-            # Clean values (remove "= ..." if present)
-            feature_names_clean = input_df.columns.str.replace(r"\s*=\s*[-+]?[0-9]*\.?[0-9]+", "", regex=True)
-
-            # Apply custom name mapping
-            feature_names_clean = [name_mapping.get(name, name) for name in feature_names_clean]
-
-
-            plt.figure()
-            shap.force_plot(
-                explainer.expected_value[0],
-                shap_values[:,:,0][0],
-                feature_names=feature_names_clean,
-                # input_df.iloc[0],
-                matplotlib=True,
-                show=False
-            )
-
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png', bbox_inches='tight')
-            plt.close()
-            buf.seek(0)
-    
-            st.image(buf, caption="SHAP Force Plot for Tabular Model")
-    
 
             # ECG model
             with torch.no_grad():
@@ -259,66 +225,103 @@ if uploaded_file is not None:
             fusion_input = np.column_stack([tabular_prob_calibration, calibrated_ecg_probs])[0].reshape(1, -1)
             fusion_prob = fusion_model.predict_proba(fusion_input)[0][1]
 
-            with st.expander("See results"):
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    threshold = 0.1313
-                    prob = tabular_prob_calibration
-                    risk_percent = prob * 100
-                    prediction = "Positive" if prob > threshold else "Negative"
-                    # st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
-                    st.markdown("Pericarditis Risk by Tabular Model:")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                threshold = 0.1313
+                prob = tabular_prob_calibration
+                risk_percent = prob * 100
+                prediction = "Positive" if prob > threshold else "Negative"
+                # st.metric("Pericarditis Risk by Tabular Model", f"{tabular_prob_calibration*100:.2f}%")
+                st.markdown("Pericarditis Risk by Tabular Model:")
 
-                    if prediction == "Positive":
-                        st.markdown(
-                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
-                        unsafe_allow_html=True
-                        )
-                    else:
-                        st.markdown(
-                        f'{risk_percent:.2f}% — Prediction: {prediction}'
-                        )
-                        
-                    st.write(f"Optimal Threshold: 13.13%")
-                    st.write(f"Positive predictive value (PPV): 27.54%")
-                with col2:
-                    threshold = 0.1344
-                    prob = calibrated_ecg_probs[0]
-                    risk_percent = prob * 100
-                    prediction = "Positive" if prob > threshold else "Negative"
-                    # st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
-                    st.markdown("Pericarditis Risk by ECG Model:")
+                if prediction == "Positive":
+                    st.markdown(
+                    f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                    unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                    f'{risk_percent:.2f}% — Prediction: {prediction}'
+                    )
+                    
+                st.write(f"Optimal Threshold: 13.13%")
+                st.write(f"Positive predictive value (PPV): 27.54%")
+            with col2:
+                threshold = 0.1344
+                prob = calibrated_ecg_probs[0]
+                risk_percent = prob * 100
+                prediction = "Positive" if prob > threshold else "Negative"
+                # st.metric("Pericarditis Risk by ECG Model", f"{calibrated_ecg_probs[0]*100:.2f}%")
+                st.markdown("Pericarditis Risk by ECG Model:")
 
-                    if prediction == "Positive":
-                        st.markdown(
-                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
-                        unsafe_allow_html=True
-                        )
-                    else:
-                        st.markdown(
-                        f'{risk_percent:.2f}% — Prediction: {prediction}'
-                        )
-                        
-                    st.write(f"Optimal Threshold: 13.44%")
-                    st.write(f"Positive predictive value (PPV): 33.80%")
-                with col3:
-                    threshold = 0.0972
-                    prob = fusion_prob
-                    risk_percent = prob * 100
-                    prediction = "Positive" if prob > threshold else "Negative"
-                    # st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
-                    st.markdown("Pericarditis Risk by Fusion Model:")
+                if prediction == "Positive":
+                    st.markdown(
+                    f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                    unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                    f'{risk_percent:.2f}% — Prediction: {prediction}'
+                    )
+                    
+                st.write(f"Optimal Threshold: 13.44%")
+                st.write(f"Positive predictive value (PPV): 33.80%")
+            with col3:
+                threshold = 0.0972
+                prob = fusion_prob
+                risk_percent = prob * 100
+                prediction = "Positive" if prob > threshold else "Negative"
+                # st.metric("Pericarditis Risk by Fusion Model", f"{fusion_prob*100:.2f}%")
+                st.markdown("Pericarditis Risk by Fusion Model:")
 
-                    if prediction == "Positive":
-                        st.markdown(
-                        f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
-                        unsafe_allow_html=True
-                        )
-                    else:
-                        st.markdown(
-                        f'{risk_percent:.2f}% — Prediction: {prediction}'
-                        )
-                        
-                    st.write(f"Optimal Threshold: 9.72%")
-                    st.write(f"Positive predictive value (PPV): 34.84%")
+                if prediction == "Positive":
+                    st.markdown(
+                    f'<span style="color:red; font-weight:bold;">{risk_percent:.2f}% — Prediction: {prediction}</span>',
+                    unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                    f'{risk_percent:.2f}% — Prediction: {prediction}'
+                    )
+                    
+                st.write(f"Optimal Threshold: 9.72%")
+                st.write(f"Positive predictive value (PPV): 34.84%")
+
+                with st.expander("See results"):
+                    shap_values = explainer.shap_values(input_df)
+                    
+                    # Mapping for custom names
+                    name_mapping = {
+                        "AF": "Atrial Fibrillation",
+                        "MI": "Myocardial Infarction",
+                        "CAD": "Coronary Artery Disease",
+                        "HF": "Heart Failure"
+                    }
         
+                    # Clean values (remove "= ..." if present)
+                    feature_names_clean = input_df.columns.str.replace(r"\s*=\s*[-+]?[0-9]*\.?[0-9]+", "", regex=True)
+        
+                    # Apply custom name mapping
+                    feature_names_clean = [name_mapping.get(name, name) for name in feature_names_clean]
+        
+        
+                    plt.figure()
+                    shap.force_plot(
+                        explainer.expected_value[0],
+                        shap_values[:,:,0][0],
+                        feature_names=feature_names_clean,
+                        # input_df.iloc[0],
+                        matplotlib=True,
+                        show=False
+                    )
+        
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png', bbox_inches='tight')
+                    plt.close()
+                    buf.seek(0)
+            
+                    st.image(buf, caption="SHAP Force Plot for Tabular Model")
+            
+        
+            
